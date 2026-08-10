@@ -2,7 +2,9 @@
 
 A simple browser shop-management game where you buy products, sell them for profit, upgrade your shop, and rebirth to become more powerful.
 
-🎮 Play
+## 🎮 Play the Game
+
+[▶️ Play Shop Simulator](https://ochine123.github.io/Shop-Simulator/)
 
 
 📦 Current Version
