@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shop Simulator</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<h1>🛒 Shop Simulator</h1>
+
+<div class="stats">
+    <p id="moneyDisplay">Money: $100</p>
+    <p id="levelDisplay">Level: 1 / 5</p>
+    <p id="rebirthDisplay">Rebirths: 0</p>
+    <p id="shopTitle">🏚️ Tiny Shop</p>
+    <p id="bonusDisplay">💰 Bonus: +0%</p>
+</div>
+
+<button id="workButton">💼 Work (+$10)</button>
+
+<div class="tabs">
+    <button id="buyTab">🛒 Buy</button>
+    <button id="sellTab">💰 Sell</button>
+</div>
+
+<div id="buySection">
+
+    <h2>🛒 Products</h2>
+
+    <div class="product">
+        <h3>🍎 Apple</h3>
+        <p>Buy Price: $25</p>
+        <p id="appleStock"></p>
+        <button id="appleBuy">Buy</button>
+    </div>
+
+    <div class="product">
+        <h3>🥤 Soda</h3>
+        <p>Buy Price: $40</p>
+        <p id="sodaStock"></p>
+        <button id="sodaBuy">Buy</button>
+    </div>
+
+    <div class="product">
+        <h3>🍪 Cookie</h3>
+        <p>Buy Price: $60</p>
+        <p id="cookieStock"></p>
+        <button id="cookieBuy">Buy</button>
+    </div>
+
+    <div class="product">
+        <h3>🍕 Pizza</h3>
+        <p>Buy Price: $100</p>
+        <p id="pizzaStock"></p>
+        <button id="pizzaBuy">Buy</button>
+    </div>
+
+    <div class="product">
+        <h3>🎮 Game</h3>
+        <p>Buy Price: $250</p>
+        <p id="gameStock"></p>
+        <button id="gameBuy">Buy</button>
+    </div>
+
+</div>
+
+<div id="sellSection">
+
+    <h2>💰 Inventory</h2>
+
+    <div class="product">
+        <h3>🍎 Apples</h3>
+        <p id="appleOwned"></p>
+        <button id="appleSell">Sell 1 ($35)</button>
+        <button id="appleSellAll">Sell All</button>
+    </div>
+
+    <div class="product">
+        <h3>🥤 Sodas</h3>
+        <p id="sodaOwned"></p>
+        <button id="sodaSell">Sell 1 ($55)</button>
+        <button id="sodaSellAll">Sell All</button>
+    </div>
+
+    <div class="product">
+        <h3>🍪 Cookies</h3>
+        <p id="cookieOwned"></p>
+        <button id="cookieSell">Sell 1 ($80)</button>
+        <button id="cookieSellAll">Sell All</button>
+    </div>
+
+    <div class="product">
+        <h3>🍕 Pizzas</h3>
+        <p id="pizzaOwned"></p>
+        <button id="pizzaSell">Sell 1 ($130)</button>
+        <button id="pizzaSellAll">Sell All</button>
+    </div>
+
+    <div class="product">
+        <h3>🎮 Games</h3>
+        <p id="gameOwned"></p>
+        <button id="gameSell">Sell 1 ($325)</button>
+        <button id="gameSellAll">Sell All</button>
+    </div>
+
+</div>
+
+<div class="upgrade">
+
+    <h2>🏪 Shop Level</h2>
+
+    <p id="upgradePrice"></p>
+
+    <button id="upgradeButton">⬆️ Upgrade Shop</button>
+
+</div>
+
+<div class="upgrade">
+
+    <h2>🛠️ Upgrade Shop</h2>
+
+    <div class="product">
+        <h3>💼 Better Work</h3>
+        <p id="workUpgradeInfo"></p>
+        <button id="workUpgradeButton">Buy</button>
+    </div>
+
+    <div class="product">
+        <h3>💰 Better Selling</h3>
+        <p id="sellUpgradeInfo"></p>
+        <button id="sellUpgradeButton">Buy</button>
+    </div>
+
+    <div class="product">
+        <h3>📦 More Stock</h3>
+        <p id="stockUpgradeInfo"></p>
+        <button id="stockUpgradeButton">Buy</button>
+    </div>
+
+    <div class="product">
+        <h3>🏪 Cheap Upgrades</h3>
+        <p id="cheapUpgradeInfo"></p>
+        <button id="cheapUpgradeButton">Buy</button>
+    </div>
+
+</div>
+
+<div class="rebirth">
+
+    <h2>🔄 Rebirth</h2>
+
+    <p id="rebirthRequirement"></p>
+
+    <button id="rebirthButton">🔄 Rebirth</button>
+
+</div>
+
+<p id="message"></p>
+
+<script src="script.js"></script>
+
+</body>
+</html>
