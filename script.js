@@ -1,1074 +1,1260 @@
+"use strict";
+
+// ==========================================
+// SHOP SIMULATOR v1.1
+// ==========================================
+
+const SAVE_KEY = "shopSimulatorV11";
+
+// ==========================================
+// GAME DATA
+// ==========================================
+
 let money = 100;
 let shopLevel = 1;
 let rebirths = 0;
 
-// INVENTORY
-let apples = 0;
-let sodas = 0;
-let cookies = 0;
-let pizzas = 0;
-let games = 0;
-
-// PERMANENT UPGRADES
-let workUpgrade = 0;
-let sellUpgrade = 0;
-let stockUpgrade = 0;
-let cheapUpgrade = 0;
-
-// PRICES
-const prices = {
-    apple: {
-        buy: 25,
-        sell: 35
-    },
-
-    soda: {
-        buy: 40,
-        sell: 55
-    },
-
-    cookie: {
-        buy: 60,
-        sell: 80
-    },
-
-    pizza: {
-        buy: 100,
-        sell: 130
-    },
-
-    game: {
-        buy: 250,
-        sell: 325
-    }
+let inventory = {
+apple: 0,
+soda: 0,
+cookie: 0,
+pizza: 0,
+game: 0
 };
 
+let stock = {
+apple: 5,
+soda: 5,
+cookie: 5,
+pizza: 5,
+game: 5
+};
 
+let prices = {
+apple:  { buy: 25,  sell: 35 },
+soda:   { buy: 40,  sell: 55 },
+cookie: { buy: 60,  sell: 80 },
+pizza:  { buy: 100, sell: 130 },
+game:   { buy: 250, sell: 325 }
+};
+
+let upgrades = {
+work: 0,
+sell: 0,
+stock: 0,
+cheap: 0
+};
+
+let worker = {
+hired: false,
+level: 0
+};
+
+let settings = {
+background: "dark",
+light: false
+};
+
+let stats = {
+earned: 0,
+spent: 0,
+bought: 0,
+sold: 0,
+work: 0,
+highestMoney: 100
+};
+
+let achievements = {};
+
+// ==========================================
+// PRODUCTS
+// ==========================================
+
+const PRODUCTS = [
+"apple",
+"soda",
+"cookie",
+"pizza",
+"game"
+];
+
+// ==========================================
+// ACHIEVEMENTS
+// ==========================================
+
+const ACHIEVEMENTS = [
+{
+id: "firstBuy",
+title: "🛒 First Purchase",
+description: "Buy your first item."
+},
+{
+id: "firstSell",
+title: "💰 First Sale",
+description: "Sell your first item."
+},
+{
+id: "work10",
+title: "💼 Hard Worker",
+description: "Work 10 times."
+},
+{
+id: "money1000",
+title: "💵 Big Money",
+description: "Have $1,000."
+},
+{
+id: "money10000",
+title: "💎 Rich",
+description: "Have $10,000."
+},
+{
+id: "buy100",
+title: "📦 Shopaholic",
+description: "Buy 100 items."
+},
+{
+id: "sell100",
+title: "💰 Professional Seller",
+description: "Sell 100 items."
+},
+{
+id: "level5",
+title: "⭐ Level 5",
+description: "Reach level 5."
+},
+{
+id: "rebirth1",
+title: "🔄 Reborn",
+description: "Rebirth for the first time."
+},
+{
+id: "worker",
+title: "👷 Employer",
+description: "Hire your first worker."
+},
+{
+id: "worker5",
+title: "👷 Experienced Worker",
+description: "Upgrade your worker to level 5."
+}
+];
+
+// ==========================================
+// DOM HELPER
+// ==========================================
+
+function $(id) {
+return document.getElementById(id);
+}
+
+// ==========================================
+// MESSAGES
+// ==========================================
+
+function message(text) {
+$("message").textContent = text;
+}
+
+// ==========================================
+// LEVEL SYSTEM
+// ==========================================
+
+function maxLevel() {
+return (rebirths + 1) * 5;
+}
+
+// ==========================================
+// BONUSES
+// ==========================================
+
+function rebirthMultiplier() {
+return 1 + rebirths * 0.10;
+}
+
+function workMultiplier() {
+return rebirthMultiplier() + upgrades.work * 0.25;
+}
+
+function sellMultiplier() {
+return rebirthMultiplier() + upgrades.sell * 0.20;
+}
+
+function upgradeCostMultiplier() {
+return Math.max(0.25, 1 - upgrades.cheap * 0.10);
+}
+
+function stockBonus() {
+return upgrades.stock * 2;
+}
+
+function workerMultiplier() {
+return 1 + worker.level * 0.20;
+}
+
+// ==========================================
 // STOCK
+// ==========================================
 
 function randomStock() {
-    return Math.floor(Math.random() * 5) + 1 + getStockBonus();
+return Math.floor(Math.random() * 5) + 1 + stockBonus();
 }
 
-let appleStock = randomStock();
-let sodaStock = randomStock();
-let cookieStock = randomStock();
-let pizzaStock = randomStock();
-let gameStock = randomStock();
-
-
-// ELEMENTS
-
-const moneyDisplay =
-    document.getElementById("moneyDisplay");
-
-const levelDisplay =
-    document.getElementById("levelDisplay");
-
-const rebirthDisplay =
-    document.getElementById("rebirthDisplay");
-
-const shopTitle =
-    document.getElementById("shopTitle");
-
-const bonusDisplay =
-    document.getElementById("bonusDisplay");
-
-const message =
-    document.getElementById("message");
-
-const workButton =
-    document.getElementById("workButton");
-
-const buySection =
-    document.getElementById("buySection");
-
-const sellSection =
-    document.getElementById("sellSection");
-
-const buyTab =
-    document.getElementById("buyTab");
-
-const sellTab =
-    document.getElementById("sellTab");
-
-const upgradeButton =
-    document.getElementById("upgradeButton");
-
-const upgradePriceDisplay =
-    document.getElementById("upgradePrice");
-
-const rebirthButton =
-    document.getElementById("rebirthButton");
-
-const rebirthRequirement =
-    document.getElementById("rebirthRequirement");
-
-
-// LEVEL SYSTEM
-
-function getMaxLevel() {
-    return (rebirths + 1) * 5;
+function refreshStock() {
+for (const item of PRODUCTS) {
+stock[item] = randomStock();
 }
 
+message("📦 Stock refreshed!");
 
-// REBIRTH BONUS
-
-function getRebirthMultiplier() {
-    return 1 + (rebirths * 0.10);
+update();
+save();
 }
 
+// ==========================================
+// DYNAMIC PRICES
+// ==========================================
 
-// WORK BONUS
+function randomizePrices() {
+for (const item of PRODUCTS) {
 
-function getWorkMultiplier() {
-    return getRebirthMultiplier() +
-           (workUpgrade * 0.25);
+const currentBuy = prices[item].buy;
+
+const change = Math.random() * 0.4 - 0.2;
+
+prices[item].buy = Math.max(
+  5,
+  Math.round(currentBuy * (1 + change))
+);
+
+prices[item].sell = Math.max(
+  8,
+  Math.round(prices[item].buy * 1.4)
+);
+
 }
 
+message("📈 Market prices changed!");
 
-// SELL BONUS
-
-function getSellMultiplier() {
-    return getRebirthMultiplier() +
-           (sellUpgrade * 0.20);
+update();
+save();
 }
 
-
-// STOCK BONUS
-
-function getStockBonus() {
-    return stockUpgrade * 2;
-}
-
-
-// CHEAP UPGRADE BONUS
-
-function getUpgradeCostMultiplier() {
-    return Math.max(
-        0.25,
-        1 - (cheapUpgrade * 0.10)
-    );
-}
-
-
+// ==========================================
 // SHOP TITLE
+// ==========================================
 
-function updateShopTitle() {
+function getShopTitle() {
 
-    if (shopLevel >= 25) {
-        shopTitle.textContent =
-            "👑 Shopping Empire";
-    }
-
-    else if (shopLevel >= 20) {
-        shopTitle.textContent =
-            "🏢 Mega Store";
-    }
-
-    else if (shopLevel >= 15) {
-        shopTitle.textContent =
-            "🏬 Supermarket";
-    }
-
-    else if (shopLevel >= 10) {
-        shopTitle.textContent =
-            "🏪 Big Store";
-    }
-
-    else if (shopLevel >= 5) {
-        shopTitle.textContent =
-            "🛍️ Popular Shop";
-    }
-
-    else if (shopLevel >= 3) {
-        shopTitle.textContent =
-            "🏪 Local Shop";
-    }
-
-    else {
-        shopTitle.textContent =
-            "🏚️ Tiny Shop";
-    }
+if (shopLevel >= 25) {
+return "👑 Shopping Empire";
 }
 
-
-// SAVE GAME
-
-function saveGame() {
-
-    const saveData = {
-
-        money: money,
-        shopLevel: shopLevel,
-        rebirths: rebirths,
-
-        workUpgrade: workUpgrade,
-        sellUpgrade: sellUpgrade,
-        stockUpgrade: stockUpgrade,
-        cheapUpgrade: cheapUpgrade,
-
-        apples: apples,
-        sodas: sodas,
-        cookies: cookies,
-        pizzas: pizzas,
-        games: games,
-
-        appleStock: appleStock,
-        sodaStock: sodaStock,
-        cookieStock: cookieStock,
-        pizzaStock: pizzaStock,
-        gameStock: gameStock
-    };
-
-    localStorage.setItem(
-        "shopSimulatorSave",
-        JSON.stringify(saveData)
-    );
+if (shopLevel >= 20) {
+return "🏢 Mega Store";
 }
 
-
-// LOAD GAME
-
-function loadGame() {
-
-    const saved =
-        localStorage.getItem("shopSimulatorSave");
-
-    if (!saved) {
-        return;
-    }
-
-    try {
-
-        const data =
-            JSON.parse(saved);
-
-        money =
-            data.money ?? 100;
-
-        shopLevel =
-            data.shopLevel ?? 1;
-
-        rebirths =
-            data.rebirths ?? 0;
-
-        workUpgrade =
-            data.workUpgrade ?? 0;
-
-        sellUpgrade =
-            data.sellUpgrade ?? 0;
-
-        stockUpgrade =
-            data.stockUpgrade ?? 0;
-
-        cheapUpgrade =
-            data.cheapUpgrade ?? 0;
-
-        apples =
-            data.apples ?? 0;
-
-        sodas =
-            data.sodas ?? 0;
-
-        cookies =
-            data.cookies ?? 0;
-
-        pizzas =
-            data.pizzas ?? 0;
-
-        games =
-            data.games ?? 0;
-
-        appleStock =
-            data.appleStock ?? randomStock();
-
-        sodaStock =
-            data.sodaStock ?? randomStock();
-
-        cookieStock =
-            data.cookieStock ?? randomStock();
-
-        pizzaStock =
-            data.pizzaStock ?? randomStock();
-
-        gameStock =
-            data.gameStock ?? randomStock();
-
-    } catch (error) {
-
-        console.log("Save file could not be loaded.");
-
-    }
+if (shopLevel >= 15) {
+return "🏬 Supermarket";
 }
 
-
-// DISPLAY
-
-function updateDisplay() {
-
-    const maxLevel =
-        getMaxLevel();
-
-    moneyDisplay.textContent =
-        "Money: $" + money;
-
-    levelDisplay.textContent =
-        "Level: " +
-        shopLevel +
-        " / " +
-        maxLevel;
-
-    rebirthDisplay.textContent =
-        "Rebirths: " +
-        rebirths;
-
-    bonusDisplay.textContent =
-        "💰 Rebirth Bonus: +" +
-        (rebirths * 10) +
-        "%";
-
-
-    upgradePriceDisplay.textContent =
-        "Upgrade Price: $" +
-        Math.floor(
-            shopLevel *
-            200 *
-            getUpgradeCostMultiplier()
-        );
-
-
-    rebirthRequirement.textContent =
-        "Reach Level " +
-        maxLevel +
-        " to rebirth.";
-
-
-    // STOCK
-
-    document.getElementById("appleStock")
-        .textContent =
-        "In stock: " + appleStock;
-
-    document.getElementById("sodaStock")
-        .textContent =
-        "In stock: " + sodaStock;
-
-    document.getElementById("cookieStock")
-        .textContent =
-        "In stock: " + cookieStock;
-
-    document.getElementById("pizzaStock")
-        .textContent =
-        "In stock: " + pizzaStock;
-
-    document.getElementById("gameStock")
-        .textContent =
-        "In stock: " + gameStock;
-
-
-    // INVENTORY
-
-    document.getElementById("appleOwned")
-        .textContent =
-        "Owned: " + apples;
-
-    document.getElementById("sodaOwned")
-        .textContent =
-        "Owned: " + sodas;
-
-    document.getElementById("cookieOwned")
-        .textContent =
-        "Owned: " + cookies;
-
-    document.getElementById("pizzaOwned")
-        .textContent =
-        "Owned: " + pizzas;
-
-    document.getElementById("gameOwned")
-        .textContent =
-        "Owned: " + games;
-
-
-    // PERMANENT UPGRADES
-
-    document.getElementById("workUpgradeInfo")
-        .textContent =
-        "Level " +
-        workUpgrade +
-        " | Cost: $" +
-        (500 * (workUpgrade + 1)) +
-        " | +25% work";
-
-    document.getElementById("sellUpgradeInfo")
-        .textContent =
-        "Level " +
-        sellUpgrade +
-        " | Cost: $" +
-        (750 * (sellUpgrade + 1)) +
-        " | +20% selling";
-
-    document.getElementById("stockUpgradeInfo")
-        .textContent =
-        "Level " +
-        stockUpgrade +
-        " | Cost: $" +
-        (1000 * (stockUpgrade + 1)) +
-        " | +2 stock";
-
-    document.getElementById("cheapUpgradeInfo")
-        .textContent =
-        "Level " +
-        cheapUpgrade +
-        " | Cost: $" +
-        (1500 * (cheapUpgrade + 1)) +
-        " | -10% upgrade cost";
-
-
-    updateShopTitle();
+if (shopLevel >= 10) {
+return "🏪 Big Store";
 }
 
+if (shopLevel >= 5) {
+return "🛍️ Popular Shop";
+}
 
+if (shopLevel >= 3) {
+return "🏪 Local Shop";
+}
+
+return "🏚️ Tiny Shop";
+}
+
+// ==========================================
+// BUY
+// ==========================================
+
+function buy(item) {
+
+if (!stock[item] || stock[item] <= 0) {
+message("❌ This item is out of stock!");
+return;
+}
+
+const price = prices[item].buy;
+
+if (money < price) {
+message("❌ Not enough money!");
+return;
+}
+
+money -= price;
+
+inventory[item]++;
+stock[item]--;
+
+stats.spent += price;
+stats.bought++;
+
+checkAchievements();
+
+message("🛒 Bought " + item + " for $" + price + "!");
+
+update();
+save();
+}
+
+// ==========================================
+// SELL
+// ==========================================
+
+function sell(item, amount) {
+
+const owned = inventory[item];
+
+if (owned <= 0) {
+message("❌ You don't have any of this item!");
+return;
+}
+
+if (amount === "all") {
+amount = owned;
+}
+
+amount = Math.min(amount, owned);
+
+if (amount <= 0) {
+return;
+}
+
+inventory[item] -= amount;
+
+const earned = Math.floor(
+prices[item].sell *
+amount *
+sellMultiplier()
+);
+
+money += earned;
+
+stats.earned += earned;
+stats.sold += amount;
+
+if (money > stats.highestMoney) {
+stats.highestMoney = money;
+}
+
+checkAchievements();
+
+message(
+"💰 Sold " +
+amount +
+" " +
+item +
+" for $" +
+earned +
+"!"
+);
+
+update();
+save();
+}
+
+// ==========================================
 // WORK
+// ==========================================
 
-workButton.addEventListener(
-    "click",
-    function() {
+function work() {
 
-        const earnings =
-            Math.floor(
-                10 *
-                getWorkMultiplier()
-            );
-
-        money += earnings;
-
-        message.textContent =
-            "💼 You earned $" +
-            earnings +
-            "!";
-
-        updateDisplay();
-        saveGame();
-    }
+const earned = Math.floor(
+10 * workMultiplier()
 );
 
+money += earned;
 
-// BUY FUNCTION
+stats.earned += earned;
+stats.work++;
 
-function buyItem(item) {
-
-    let stock = 0;
-
-    if (item === "apple")
-        stock = appleStock;
-
-    if (item === "soda")
-        stock = sodaStock;
-
-    if (item === "cookie")
-        stock = cookieStock;
-
-    if (item === "pizza")
-        stock = pizzaStock;
-
-    if (item === "game")
-        stock = gameStock;
-
-
-    if (stock <= 0) {
-
-        message.textContent =
-            "❌ Out of stock!";
-
-        return;
-    }
-
-
-    if (money < prices[item].buy) {
-
-        message.textContent =
-            "❌ Not enough money!";
-
-        return;
-    }
-
-
-    money -= prices[item].buy;
-
-
-    if (item === "apple") {
-
-        apples++;
-        appleStock--;
-
-    }
-
-    if (item === "soda") {
-
-        sodas++;
-        sodaStock--;
-
-    }
-
-    if (item === "cookie") {
-
-        cookies++;
-        cookieStock--;
-
-    }
-
-    if (item === "pizza") {
-
-        pizzas++;
-        pizzaStock--;
-
-    }
-
-    if (item === "game") {
-
-        games++;
-        gameStock--;
-
-    }
-
-
-    message.textContent =
-        "🛒 Bought " +
-        item +
-        "!";
-
-    updateDisplay();
-    saveGame();
+if (money > stats.highestMoney) {
+stats.highestMoney = money;
 }
 
+checkAchievements();
 
-// BUY BUTTONS
+message("💼 You earned $" + earned + "!");
 
-document.getElementById("appleBuy")
-    .addEventListener("click", function() {
-
-        buyItem("apple");
-
-    });
-
-document.getElementById("sodaBuy")
-    .addEventListener("click", function() {
-
-        buyItem("soda");
-
-    });
-
-document.getElementById("cookieBuy")
-    .addEventListener("click", function() {
-
-        buyItem("cookie");
-
-    });
-
-document.getElementById("pizzaBuy")
-    .addEventListener("click", function() {
-
-        buyItem("pizza");
-
-    });
-
-document.getElementById("gameBuy")
-    .addEventListener("click", function() {
-
-        buyItem("game");
-
-    });
-
-
-// SELL FUNCTION
-
-function sellItem(item, amount) {
-
-    let owned = 0;
-
-
-    if (item === "apple")
-        owned = apples;
-
-    if (item === "soda")
-        owned = sodas;
-
-    if (item === "cookie")
-        owned = cookies;
-
-    if (item === "pizza")
-        owned = pizzas;
-
-    if (item === "game")
-        owned = games;
-
-
-    if (owned <= 0) {
-
-        message.textContent =
-            "❌ You don't own any!";
-
-        return;
-    }
-
-
-    if (amount === "all") {
-        amount = owned;
-    }
-
-
-    if (item === "apple")
-        apples -= amount;
-
-    if (item === "soda")
-        sodas -= amount;
-
-    if (item === "cookie")
-        cookies -= amount;
-
-    if (item === "pizza")
-        pizzas -= amount;
-
-    if (item === "game")
-        games -= amount;
-
-
-    const earnings =
-        Math.floor(
-            prices[item].sell *
-            amount *
-            getSellMultiplier()
-        );
-
-
-    money += earnings;
-
-
-    message.textContent =
-        "💰 Sold " +
-        amount +
-        " " +
-        item +
-        " for $" +
-        earnings +
-        "!";
-
-
-    updateDisplay();
-    saveGame();
+update();
+save();
 }
 
+// ==========================================
+// SHOP UPGRADE
+// ==========================================
 
-// SELL ONE
+function upgradeShop() {
 
-document.getElementById("appleSell")
-    .addEventListener("click", function() {
+if (shopLevel >= maxLevel()) {
+message(
+"👑 MAX LEVEL! Rebirth to continue."
+);
+return;
+}
 
-        sellItem("apple", 1);
-
-    });
-
-document.getElementById("sodaSell")
-    .addEventListener("click", function() {
-
-        sellItem("soda", 1);
-
-    });
-
-document.getElementById("cookieSell")
-    .addEventListener("click", function() {
-
-        sellItem("cookie", 1);
-
-    });
-
-document.getElementById("pizzaSell")
-    .addEventListener("click", function() {
-
-        sellItem("pizza", 1);
-
-    });
-
-document.getElementById("gameSell")
-    .addEventListener("click", function() {
-
-        sellItem("game", 1);
-
-    });
-
-
-// SELL ALL
-
-document.getElementById("appleSellAll")
-    .addEventListener("click", function() {
-
-        sellItem("apple", "all");
-
-    });
-
-document.getElementById("sodaSellAll")
-    .addEventListener("click", function() {
-
-        sellItem("soda", "all");
-
-    });
-
-document.getElementById("cookieSellAll")
-    .addEventListener("click", function() {
-
-        sellItem("cookie", "all");
-
-    });
-
-document.getElementById("pizzaSellAll")
-    .addEventListener("click", function() {
-
-        sellItem("pizza", "all");
-
-    });
-
-document.getElementById("gameSellAll")
-    .addEventListener("click", function() {
-
-        sellItem("game", "all");
-
-    });
-
-
-// BUY TAB
-
-buyTab.addEventListener(
-    "click",
-    function() {
-
-        buySection.style.display =
-            "block";
-
-        sellSection.style.display =
-            "none";
-    }
+const cost = Math.floor(
+shopLevel *
+200 *
+upgradeCostMultiplier()
 );
 
+if (money < cost) {
+message("❌ Not enough money!");
+return;
+}
 
-// SELL TAB
+money -= cost;
+stats.spent += cost;
 
-sellTab.addEventListener(
-    "click",
-    function() {
+shopLevel++;
 
-        buySection.style.display =
-            "none";
+checkAchievements();
 
-        sellSection.style.display =
-            "block";
-    }
+message(
+"⬆️ Shop upgraded to Level " +
+shopLevel +
+"!"
 );
 
+update();
+save();
+}
 
-// NORMAL SHOP UPGRADE
+// ==========================================
+// PERMANENT UPGRADES
+// ==========================================
 
-upgradeButton.addEventListener(
-    "click",
-    function() {
+function buyUpgrade(type, baseCost) {
 
-        const maxLevel =
-            getMaxLevel();
-
-        const upgradePrice =
-            Math.floor(
-                shopLevel *
-                200 *
-                getUpgradeCostMultiplier()
-            );
-
-
-        if (shopLevel >= maxLevel) {
-
-            message.textContent =
-                "👑 MAX LEVEL! Rebirth to unlock more levels!";
-
-            return;
-        }
-
-
-        if (money < upgradePrice) {
-
-            message.textContent =
-                "❌ Not enough money!";
-
-            return;
-        }
-
-
-        money -= upgradePrice;
-
-        shopLevel++;
-
-
-        message.textContent =
-            "⬆️ Shop upgraded to Level " +
-            shopLevel +
-            "!";
-
-
-        updateDisplay();
-        saveGame();
-    }
+const cost = Math.floor(
+baseCost *
+(upgrades[type] + 1) *
+upgradeCostMultiplier()
 );
 
+if (money < cost) {
+message("❌ Not enough money!");
+return;
+}
 
-// BETTER WORK
+money -= cost;
+stats.spent += cost;
 
-document.getElementById(
-    "workUpgradeButton"
-).addEventListener(
-    "click",
-    function() {
+upgrades[type]++;
 
-        const cost =
-            500 *
-            (workUpgrade + 1);
+message("⬆️ Upgrade purchased!");
 
+update();
+save();
+}
 
-        if (money < cost) {
+// ==========================================
+// WORKER
+// ==========================================
 
-            message.textContent =
-                "❌ Not enough money!";
+function hireWorker() {
 
-            return;
-        }
+if (worker.hired) {
+message("👷 You already have a worker!");
+return;
+}
 
+const cost = 5000;
 
-        money -= cost;
+if (money < cost) {
+message(
+"❌ You need $5,000 to hire a Cashier/Seller!"
+);
+return;
+}
 
-        workUpgrade++;
+money -= cost;
+stats.spent += cost;
 
+worker.hired = true;
+worker.level = 1;
 
-        message.textContent =
-            "💼 Better Work is now Level " +
-            workUpgrade +
-            "!";
+checkAchievements();
 
+message("👷 Cashier/Seller hired!");
 
-        updateDisplay();
-        saveGame();
-    }
+update();
+save();
+}
+
+function upgradeWorker() {
+
+if (!worker.hired) {
+message("❌ Hire a worker first!");
+return;
+}
+
+const cost = 3000 * worker.level;
+
+if (money < cost) {
+message("❌ Not enough money!");
+return;
+}
+
+money -= cost;
+stats.spent += cost;
+
+worker.level++;
+
+checkAchievements();
+
+message(
+"👷 Worker upgraded to Level " +
+worker.level +
+"!"
 );
 
+update();
+save();
+}
 
-// BETTER SELLING
+// ==========================================
+// AUTOMATIC WORKER
+// ==========================================
 
-document.getElementById(
-    "sellUpgradeButton"
-).addEventListener(
-    "click",
-    function() {
+function workerSell() {
 
-        const cost =
-            750 *
-            (sellUpgrade + 1);
+if (!worker.hired) {
+return;
+}
 
+let soldSomething = false;
 
-        if (money < cost) {
+for (const item of PRODUCTS) {
 
-            message.textContent =
-                "❌ Not enough money!";
+if (inventory[item] <= 0) {
+  continue;
+}
 
-            return;
-        }
-
-
-        money -= cost;
-
-        sellUpgrade++;
-
-
-        message.textContent =
-            "💰 Better Selling is now Level " +
-            sellUpgrade +
-            "!";
-
-
-        updateDisplay();
-        saveGame();
-    }
+const amount = Math.min(
+  inventory[item],
+  worker.level
 );
 
+inventory[item] -= amount;
 
-// MORE STOCK
-
-document.getElementById(
-    "stockUpgradeButton"
-).addEventListener(
-    "click",
-    function() {
-
-        const cost =
-            1000 *
-            (stockUpgrade + 1);
-
-
-        if (money < cost) {
-
-            message.textContent =
-                "❌ Not enough money!";
-
-            return;
-        }
-
-
-        money -= cost;
-
-        stockUpgrade++;
-
-
-        message.textContent =
-            "📦 More Stock is now Level " +
-            stockUpgrade +
-            "!";
-
-
-        updateDisplay();
-        saveGame();
-    }
+const earned = Math.floor(
+  prices[item].sell *
+  amount *
+  sellMultiplier() *
+  workerMultiplier()
 );
 
+money += earned;
 
-// CHEAP UPGRADES
+stats.earned += earned;
+stats.sold += amount;
 
-document.getElementById(
-    "cheapUpgradeButton"
-).addEventListener(
-    "click",
-    function() {
+soldSomething = true;
 
-        const cost =
-            1500 *
-            (cheapUpgrade + 1);
+}
 
+if (soldSomething) {
 
-        if (money < cost) {
+if (money > stats.highestMoney) {
+  stats.highestMoney = money;
+}
 
-            message.textContent =
-                "❌ Not enough money!";
+checkAchievements();
 
-            return;
-        }
-
-
-        money -= cost;
-
-        cheapUpgrade++;
-
-
-        message.textContent =
-            "🏪 Cheap Upgrades is now Level " +
-            cheapUpgrade +
-            "!";
-
-
-        updateDisplay();
-        saveGame();
-    }
+message(
+  "👷 Your Cashier/Seller sold some items!"
 );
 
+update();
+save();
 
+}
+}
+
+// ==========================================
 // REBIRTH
+// ==========================================
 
-rebirthButton.addEventListener(
-    "click",
-    function() {
+function rebirth() {
 
-        const maxLevel =
-            getMaxLevel();
+const requiredLevel = maxLevel();
 
+if (shopLevel < requiredLevel) {
+message(
+"🔒 You need Level " +
+requiredLevel +
+" to rebirth!"
+);
+return;
+}
 
-        if (shopLevel < maxLevel) {
-
-            message.textContent =
-                "🔒 You need Level " +
-                maxLevel +
-                " to rebirth!";
-
-            return;
-        }
-
-
-        rebirths++;
-
-        shopLevel = 1;
-
-
-        apples = 0;
-        sodas = 0;
-        cookies = 0;
-        pizzas = 0;
-        games = 0;
-
-
-        appleStock = randomStock();
-        sodaStock = randomStock();
-        cookieStock = randomStock();
-        pizzaStock = randomStock();
-        gameStock = randomStock();
-
-
-        message.textContent =
-            "🔄 REBIRTH #" +
-            rebirths +
-            "! +" +
-            (rebirths * 10) +
-            "% bonus!";
-
-
-        updateDisplay();
-        saveGame();
-    }
+const confirmed = confirm(
+"🔄 Rebirth?\n\n" +
+"Your level and inventory will reset.\n" +
+"YOUR MONEY WILL STAY.\n\n" +
+"Continue?"
 );
 
+if (!confirmed) {
+return;
+}
 
-// STOCK REFRESH EVERY 2 MINUTES
+rebirths++;
 
-setInterval(
-    function() {
+shopLevel = 1;
 
-        appleStock = randomStock();
-        sodaStock = randomStock();
-        cookieStock = randomStock();
-        pizzaStock = randomStock();
-        gameStock = randomStock();
+stats.rebirths =
+(stats.rebirths || 0) + 1;
 
+for (const item of PRODUCTS) {
+inventory[item] = 0;
+stock[item] = randomStock();
+}
 
-        message.textContent =
-            "📦 Stock refreshed!";
+checkAchievements();
 
-
-        updateDisplay();
-        saveGame();
-
-    },
-    120000
+message(
+"🔄 Rebirth #" +
+rebirths +
+" complete! " +
+"You now have +" +
+rebirths * 10 +
+"% money bonus!"
 );
 
+update();
+save();
+}
 
-// AUTOSAVE EVERY 5 SECONDS
+// ==========================================
+// ACHIEVEMENTS
+// ==========================================
 
-setInterval(
-    function() {
+function checkAchievements() {
 
-        saveGame();
+if (stats.bought >= 1) {
+achievements.firstBuy = true;
+}
 
-    },
-    5000
+if (stats.sold >= 1) {
+achievements.firstSell = true;
+}
+
+if (stats.work >= 10) {
+achievements.work10 = true;
+}
+
+if (money >= 1000) {
+achievements.money1000 = true;
+}
+
+if (money >= 10000) {
+achievements.money10000 = true;
+}
+
+if (stats.bought >= 100) {
+achievements.buy100 = true;
+}
+
+if (stats.sold >= 100) {
+achievements.sell100 = true;
+}
+
+if (shopLevel >= 5) {
+achievements.level5 = true;
+}
+
+if (rebirths >= 1) {
+achievements.rebirth1 = true;
+}
+
+if (worker.hired) {
+achievements.worker = true;
+}
+
+if (worker.level >= 5) {
+achievements.worker5 = true;
+}
+
+renderAchievements();
+}
+
+function renderAchievements() {
+
+const container = $("achievementsList");
+
+container.innerHTML = "";
+
+for (const achievement of ACHIEVEMENTS) {
+
+const unlocked =
+  achievements[achievement.id] === true;
+
+const div =
+  document.createElement("div");
+
+div.className =
+  "achievement " +
+  (unlocked ? "unlocked" : "locked");
+
+div.innerHTML =
+  "<strong>" +
+  (unlocked ? "✅ " : "🔒 ") +
+  achievement.title +
+  "</strong>" +
+  "<br>" +
+  "<small>" +
+  achievement.description +
+  "</small>";
+
+container.appendChild(div);
+
+}
+}
+
+// ==========================================
+// SETTINGS
+// ==========================================
+
+function applySettings() {
+
+document.body.classList.remove(
+"bg-dark",
+"bg-blue",
+"bg-green",
+"bg-purple"
 );
 
+document.body.classList.add(
+"bg-" + settings.background
+);
 
-// START
+document.body.classList.toggle(
+"light",
+settings.light
+);
 
-loadGame();
+$("themeBtn").textContent =
+settings.light
+? "☀️ Light Mode"
+: "🌙 Dark Mode";
+}
 
-sellSection.style.display =
-    "none";
+function openSettings() {
+$("settingsModal").classList.remove("hidden");
+}
 
-updateDisplay();
+function closeSettings() {
+$("settingsModal").classList.add("hidden");
+}
+
+function toggleTheme() {
+
+settings.light = !settings.light;
+
+applySettings();
+save();
+}
+
+// ==========================================
+// RESET SAVE
+// ==========================================
+
+function resetSave() {
+
+const first =
+confirm(
+"⚠️ Are you sure you want to reset your save?"
+);
+
+if (!first) {
+return;
+}
+
+const second =
+confirm(
+"🚨 FINAL WARNING!\n\n" +
+"This deletes EVERYTHING:\n" +
+"Money\n" +
+"Levels\n" +
+"Inventory\n" +
+"Rebirths\n" +
+"Upgrades\n" +
+"Workers\n" +
+"Achievements\n\n" +
+"RESET?"
+);
+
+if (!second) {
+return;
+}
+
+localStorage.removeItem(SAVE_KEY);
+
+location.reload();
+}
+
+// ==========================================
+// TABS
+// ==========================================
+
+function showSection(section) {
+
+$("buySection").classList.add("hidden");
+$("sellSection").classList.add("hidden");
+$("statsSection").classList.add("hidden");
+$("achievementsSection").classList.add("hidden");
+
+$(section).classList.remove("hidden");
+}
+
+// ==========================================
+// UPDATE UI
+// ==========================================
+
+function update() {
+
+$("money").textContent =
+"💵 $" + Math.floor(money);
+
+$("level").textContent =
+"⭐ Level " +
+shopLevel +
+" / " +
+maxLevel();
+
+$("rebirths").textContent =
+"🔄 Rebirths: " +
+rebirths;
+
+$("shopTitle").textContent =
+getShopTitle();
+
+$("rebirthBonus").textContent =
+"💰 Rebirth Bonus: +" +
+rebirths * 10 +
+"%";
+
+// Products
+for (const item of PRODUCTS) {
+
+$(item + "Info").textContent =
+  "Buy: $" +
+  prices[item].buy +
+  " | Sell: $" +
+  Math.floor(
+    prices[item].sell *
+    sellMultiplier()
+  ) +
+  " | Stock: " +
+  stock[item];
+
+$(item + "Owned").textContent =
+  "Owned: " +
+  inventory[item];
+
+}
+
+// Shop
+if (shopLevel >= maxLevel()) {
+
+$("shopUpgradeInfo").textContent =
+  "👑 MAX LEVEL";
+
+$("shopUpgradeBtn").textContent =
+  "👑 MAX LEVEL";
+
+} else {
+
+const cost = Math.floor(
+  shopLevel *
+  200 *
+  upgradeCostMultiplier()
+);
+
+$("shopUpgradeInfo").textContent =
+  "Next upgrade: $" + cost;
+
+$("shopUpgradeBtn").textContent =
+  "⬆️ Upgrade ($" + cost + ")";
+
+}
+
+// Upgrades
+$("workUpgradeInfo").textContent =
+"Level " +
+upgrades.work +
+" | +25% work per level";
+
+$("sellUpgradeInfo").textContent =
+"Level " +
+upgrades.sell +
+" | +20% selling per level";
+
+$("stockUpgradeInfo").textContent =
+"Level " +
+upgrades.stock +
+" | +2 stock per level";
+
+$("cheapUpgradeInfo").textContent =
+"Level " +
+upgrades.cheap +
+" | -10% upgrade costs";
+
+// Worker
+if (worker.hired) {
+
+$("workerInfo").textContent =
+  "👷 Level " +
+  worker.level +
+  " | Automatically sells inventory.";
+
+$("hireWorkerBtn").textContent =
+  "✅ Hired";
+
+$("upgradeWorkerBtn").textContent =
+  "⬆️ Upgrade ($" +
+  3000 * worker.level +
+  ")";
+
+} else {
+
+$("workerInfo").textContent =
+  "Hire a Cashier/Seller for $5,000.";
+
+$("hireWorkerBtn").textContent =
+  "👷 Hire ($5,000)";
+
+$("upgradeWorkerBtn").textContent =
+  "⬆️ Upgrade";
+
+}
+
+// Rebirth
+$("rebirthInfo").textContent =
+"Reach Level " +
+maxLevel() +
+" to rebirth. " +
+"Your money stays.";
+
+// Statistics
+$("totalEarned").textContent =
+"💰 Total Earned: $" +
+stats.earned;
+
+$("totalSpent").textContent =
+"💸 Total Spent: $" +
+stats.spent;
+
+$("itemsBought").textContent =
+"🛒 Items Bought: " +
+stats.bought;
+
+$("itemsSold").textContent =
+"💰 Items Sold: " +
+stats.sold;
+
+$("timesWorked").textContent =
+"💼 Times Worked: " +
+stats.work;
+
+$("highestMoney").textContent =
+"👑 Highest Money: $" +
+stats.highestMoney;
+}
+
+// ==========================================
+// SAVE
+// ==========================================
+
+function save() {
+
+const data = {
+money,
+shopLevel,
+rebirths,
+inventory,
+stock,
+prices,
+upgrades,
+worker,
+settings,
+stats,
+achievements
+};
+
+localStorage.setItem(
+SAVE_KEY,
+JSON.stringify(data)
+);
+}
+
+// ==========================================
+// LOAD
+// ==========================================
+
+function load() {
+
+const raw =
+localStorage.getItem(SAVE_KEY);
+
+if (!raw) {
+return;
+}
+
+try {
+
+const data =
+  JSON.parse(raw);
+
+money =
+  typeof data.money === "number"
+    ? data.money
+    : 100;
+
+shopLevel =
+  typeof data.shopLevel === "number"
+    ? data.shopLevel
+    : 1;
+
+rebirths =
+  typeof data.rebirths === "number"
+    ? data.rebirths
+    : 0;
+
+inventory =
+  data.inventory || inventory;
+
+stock =
+  data.stock || stock;
+
+prices =
+  data.prices || prices;
+
+upgrades =
+  data.upgrades || upgrades;
+
+worker =
+  data.worker || worker;
+
+settings =
+  data.settings || settings;
+
+stats =
+  data.stats || stats;
+
+achievements =
+  data.achievements || {};
+
+} catch (error) {
+
+console.error(
+  "Save failed to load:",
+  error
+);
+
+}
+}
+
+// ==========================================
+// BUTTON EVENTS
+// ==========================================
+
+// Work
+$("workBtn")
+.addEventListener("click", work);
+
+// Buy
+$("appleBuy")
+.addEventListener("click", () => buy("apple"));
+
+$("sodaBuy")
+.addEventListener("click", () => buy("soda"));
+
+$("cookieBuy")
+.addEventListener("click", () => buy("cookie"));
+
+$("pizzaBuy")
+.addEventListener("click", () => buy("pizza"));
+
+$("gameBuy")
+.addEventListener("click", () => buy("game"));
+
+// Sell 1
+$("appleSell")
+.addEventListener("click", () => sell("apple", 1));
+
+$("sodaSell")
+.addEventListener("click", () => sell("soda", 1));
+
+$("cookieSell")
+.addEventListener("click", () => sell("cookie", 1));
+
+$("pizzaSell")
+.addEventListener("click", () => sell("pizza", 1));
+
+$("gameSell")
+.addEventListener("click", () => sell("game", 1));
+
+// Sell all
+$("appleSellAll")
+.addEventListener("click", () => sell("apple", "all"));
+
+$("sodaSellAll")
+.addEventListener("click", () => sell("soda", "all"));
+
+$("cookieSellAll")
+.addEventListener("click", () => sell("cookie", "all"));
+
+$("pizzaSellAll")
+.addEventListener("click", () => sell("pizza", "all"));
+
+$("gameSellAll")
+.addEventListener("click", () => sell("game", "all"));
+
+// Shop
+$("shopUpgradeBtn")
+.addEventListener("click", upgradeShop);
+
+// Permanent upgrades
+$("workUpgradeBtn")
+.addEventListener(
+"click",
+() => buyUpgrade("work", 500)
+);
+
+$("sellUpgradeBtn")
+.addEventListener(
+"click",
+() => buyUpgrade("sell", 750)
+);
+
+$("stockUpgradeBtn")
+.addEventListener(
+"click",
+() => buyUpgrade("stock", 1000)
+);
+
+$("cheapUpgradeBtn")
+.addEventListener(
+"click",
+() => buyUpgrade("cheap", 1500)
+);
+
+// Worker
+$("hireWorkerBtn")
+.addEventListener("click", hireWorker);
+
+$("upgradeWorkerBtn")
+.addEventListener("click", upgradeWorker);
+
+// Rebirth
+$("rebirthBtn")
+.addEventListener("click", rebirth);
+
+// Tabs
+$("buyTab")
+.addEventListener(
+"click",
+() => showSection("buySection")
+);
+
+$("sellTab")
+.addEventListener(
+"click",
+() => showSection("sellSection")
+);
+
+$("statsTab")
+.addEventListener(
+"click",
+() => showSection("statsSection")
+);
+
+$("achievementsTab")
+.addEventListener(
+"click",
+() => showSection("achievementsSection")
+);
+
+// Settings
+$("settingsBtn")
+.addEventListener("click", openSettings);
+
+$("closeSettings")
+.addEventListener("click", closeSettings);
+
+$("themeBtn")
+.addEventListener("click", toggleTheme);
+
+$("saveBtn")
+.addEventListener("click", () => {
+save();
+message("💾 Game saved!");
+});
+
+$("resetBtn")
+.addEventListener("click", resetSave);
+
+// Backgrounds
+document
+.querySelectorAll("[data-background]")
+.forEach(button => {
+
+button.addEventListener(
+  "click",
+  () => {
+
+    settings.background =
+      button.dataset.background;
+
+    applySettings();
+    save();
+  }
+);
+
+});
+
+// ==========================================
+// TIMERS
+// ==========================================
+
+// Worker acts every 15 seconds
+setInterval(workerSell, 15000);
+
+// Stock refreshes every 2 minutes
+setInterval(refreshStock, 120000);
+
+// Market changes every 3 minutes
+setInterval(randomizePrices, 180000);
+
+// Autosave every 5 seconds
+setInterval(save, 5000);
+
+// ==========================================
+// START GAME
+// ==========================================
+
+load();
+
+applySettings();
+
+update();
+
+checkAchievements();
+
+console.log(
+"🛒 Shop Simulator v1.1 loaded!"
+);
