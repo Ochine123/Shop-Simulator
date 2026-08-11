@@ -7,8 +7,6 @@ A simple browser shop-management game where you buy products, sell them for prof
 [▶️ Play Shop Simulator](https://ochine123.github.io/Shop-Simulator/)
 
 
-📦 Current Version
-
 v1.0 — Initial Release
 
 Added:
@@ -27,12 +25,14 @@ Added:
 - 🏪 Cheap Upgrades
 - 💾 Automatic saving
 
-📝 Changelog
-
-v1.0 — Initial Release
-
-The first public version of Shop Simulator.
-
+v1.1 — Shop Expansion
+- ⚙️ Settings
+- 🎨 Backgrounds
+- 📊 Statistics
+- 👷 Cashier/Seller
+- 🛠️ Upgrade Shop
+- 💾 Save system improvements
+- 🏆 New achievements
 ---
 
 Made by Smoothie 🥤
